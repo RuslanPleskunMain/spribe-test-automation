@@ -1,0 +1,58 @@
+name: Test PlayerController API tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 11
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Run tests
+      run: mvn clean test
+      
+    - name: Generate Allure Report
+      if: always()
+      run: mvn allure:report
+      
+    - name: Upload Allure Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: allure-results
+        path: target/allure-results
+        
+    - name: Upload Allure Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: allure-report
+        path: target/allure-report
+        
+    - name: Upload Test Logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-logs
+        path: target/logs
+        
+    - name: Publish Test Report
+      if: always()
+      uses: dorny/test-reporter@v1
+      with:
+        name: TestNG Results
+        path: target/surefire-reports/TEST-*.xml
+        reporter: java-junit
